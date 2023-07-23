@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { Instance } from '../../axios';
@@ -16,6 +17,14 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [viewLogin, setViewLogin] = useState(true);
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm();
+  console.log('🚀 ~ file: login.js:24 ~ Login ~ errors:', errors);
+
   const [credentials, setCredentials] = useState({
     email: '',
     password: '',
@@ -27,10 +36,10 @@ const Login = () => {
 
   const handleChange = (e) => setCredentials((prevState) => ({ ...prevState, [e.target.name]: e.target.value }));
 
-  const onLogin = async () => {
+  const onSubmit = async (data) => {
     setIsLoading(true);
     if (viewLogin) {
-      const userDetails = await Instance.post(Routes.auth.login, credentials)
+      const userDetails = await Instance.post(Routes.auth.login, data)
         .then((res) => {
           dispatch(addUser(res.data));
           toast.success('Successfully loggedIn!');
@@ -42,7 +51,7 @@ const Login = () => {
         })
         .finally(() => setIsLoading(false));
     } else {
-      const userDetails = await Instance.post(Routes.auth.signup, credentials)
+      const userDetails = await Instance.post(Routes.auth.signup, data)
         .then((res) => {
           setViewLogin(true);
           toast.success(res?.data?.message);
@@ -70,10 +79,18 @@ const Login = () => {
               type="text"
               id="email"
               name="email"
-              value={credentials.email}
-              onChange={handleChange}
+              {...register('email', {
+                required: 'Email is required.',
+                pattern: {
+                  value: /^[^@ ]+@[^@ ]+\.[^@ .]{2,}$/,
+                  message: 'Email is not valid.',
+                },
+              })}
+              // value={credentials.email}
+              // onChange={handleChange}
               className="block w-full px-4 py-2 mt-2 text-purple-700 bg-white border rounded-md focus:border-purple-400 focus:ring-purple-300 focus:outline-none focus:ring focus:ring-opacity-40"
             />
+             {errors.email && <p className="errorMsg">{errors.email.message}</p>}
           </div>
           <div className="mb-2">
             <label for="password" className="block text-sm font-semibold text-gray-800">
@@ -83,10 +100,18 @@ const Login = () => {
               id="password"
               type="password"
               name="password"
-              value={credentials.password}
-              onChange={handleChange}
+              {...register('password', {
+                required: true,
+                validate: {
+                  checkLength: (value) => value.length >= 6,
+                },
+              })}
               className="block w-full px-4 py-2 mt-2 text-purple-700 bg-white border rounded-md focus:border-purple-400 focus:ring-purple-300 focus:outline-none focus:ring focus:ring-opacity-40"
             />
+            {errors.password?.type === 'required' && <p className="errorMsg">Password is required.</p>}
+            {errors.password?.type === 'checkLength' && (
+              <p className="errorMsg">Password should be at-least 6 characters.</p>
+            )}
           </div>
           <div class="flex flex-row justify-center gap-4">
             <div className="mt-6 mb-6">
@@ -97,7 +122,7 @@ const Login = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={onLogin}
+                  onClick={handleSubmit(onSubmit)}
                   disabled={isLoading}
                   className="w-full px-4 py-2 tracking-wide text-white transition-colors duration-200 transform bg-purple-700 rounded-md hover:bg-purple-600 focus:outline-none focus:bg-purple-600"
                 >
