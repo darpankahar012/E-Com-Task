@@ -23,18 +23,10 @@ const Login = () => {
     formState: { errors },
     reset,
   } = useForm();
-  console.log('🚀 ~ file: login.js:24 ~ Login ~ errors:', errors);
-
-  const [credentials, setCredentials] = useState({
-    email: '',
-    password: '',
-  });
 
   useEffect(() => {
     if (user?.token) navigate('/');
   }, [user, navigate]);
-
-  const handleChange = (e) => setCredentials((prevState) => ({ ...prevState, [e.target.name]: e.target.value }));
 
   const onSubmit = async (data) => {
     setIsLoading(true);
@@ -44,6 +36,7 @@ const Login = () => {
           dispatch(addUser(res.data));
           toast.success('Successfully loggedIn!');
           navigate('/');
+          reset();
         })
         .catch((error) => {
           toast.error(error.response.data.message);
@@ -55,6 +48,7 @@ const Login = () => {
         .then((res) => {
           setViewLogin(true);
           toast.success(res?.data?.message);
+          reset();
         })
         .catch((error) => {
           toast.error(error.response.data.message);
